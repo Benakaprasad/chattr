@@ -101,12 +101,10 @@ function App() {
         <div className="login-container">
           <div className="login-left">
             <div className="login-brand">
-              <div className="login-brand-logo">
-                <img src="/chattr-logo.svg" alt="Chattr" width="48" height="48" />
-                <div className="login-brand-name">Chattr</div>
-              </div>
-              <div className="login-tagline">Real-time global messaging</div>
-            </div>
+            <img src="/chattr.svg" alt="Chattr" width="52" height="52" />
+            <div className="login-brand-name">Chattr</div>
+            <div className="login-tagline">Real-time global messaging</div>
+          </div>
 
             <div className="login-headline">
               <h1>
@@ -176,11 +174,12 @@ function App() {
       <div className="app">
         <header className="chat-header">
           <div className="header-left">
-            <img src="/chattr-logo.svg" alt="Chattr" width="28" height="28" />
-            <span className="header-wordmark">Chattr</span>
-            <span className="header-divider" />
-            <span className="header-username">{username}</span>
-          </div>
+          <img src="/chattr.svg" alt="Chattr" width="32" height="32" />
+          <span className="header-divider" />
+          <span className="header-wordmark">Chattr</span>
+          <span className="header-divider" />
+          <span className="header-username">{username}</span>
+        </div>
           <div className="header-right">
             <div className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
               <span className={`dot ${isConnected ? 'active' : ''}`} />
