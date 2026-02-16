@@ -9,26 +9,25 @@ const app = express();
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
+const server = createServer(app);
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173'
 ].filter(Boolean);
 
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
-}));
-
-const server = createServer(app);
-
 const io = new Server(server, { 
     cors:{
-        origin: allowedOrigins,
+        origin: "*",
         methods: ["GET", "POST"],
-        credentials: true
+        credentials: false
     }
 });
+
+app.use(cors({
+    origin: "*",
+    credentials: false
+}));
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -78,6 +77,13 @@ connectDB();
 
 app.get('/api/health', (req, res) => {
     res.status(200).json({ message: "hello world!" });
+});
+
+app.get('/api/debug', (req, res) => {
+    res.status(200).json({ 
+        frontend_url: process.env.FRONTEND_URL,
+        allowedOrigins: allowedOrigins
+    });
 });
 
 server.listen(port, '0.0.0.0', () => {
