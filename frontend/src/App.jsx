@@ -101,7 +101,10 @@ function App() {
         <div className="login-container">
           <div className="login-left">
             <div className="login-brand">
-              <div className="login-brand-name">Chattr</div>
+              <div className="login-brand-logo">
+                <img src="/chattr-logo.svg" alt="Chattr" width="48" height="48" />
+                <div className="login-brand-name">Chattr</div>
+              </div>
               <div className="login-tagline">Real-time global messaging</div>
             </div>
 
@@ -137,7 +140,7 @@ function App() {
                   type="text"
                   value={tempUsername}
                   onChange={(e) => setTempUsername(e.target.value)}
-                  placeholder="e.g. john"
+                  placeholder="e.g. benaka"
                   className="login-input"
                   maxLength={20}
                   autoFocus
@@ -173,6 +176,7 @@ function App() {
       <div className="app">
         <header className="chat-header">
           <div className="header-left">
+            <img src="/chattr-logo.svg" alt="Chattr" width="28" height="28" />
             <span className="header-wordmark">Chattr</span>
             <span className="header-divider" />
             <span className="header-username">{username}</span>

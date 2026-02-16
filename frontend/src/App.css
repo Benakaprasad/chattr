@@ -91,6 +91,12 @@ body {
   gap: 8px;
 }
 
+.login-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .login-brand-name {
   font-family: var(--font-display);
   font-size: 13px;
@@ -225,9 +231,12 @@ body {
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 500;
+  line-height: 1.5;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
   letter-spacing: -0.01em;
+  -webkit-appearance: none;
+  border-radius: 0;
 }
 
 .login-input::placeholder {
@@ -459,10 +468,10 @@ body {
 .message {
   display: grid;
   grid-template-columns: 96px 1fr auto;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid transparent;
+  padding: 10px 12px;
+  border-radius: 2px;
   transition: background 0.15s;
   animation: fadeIn 0.2s ease-out;
 }
@@ -539,15 +548,19 @@ body {
 }
 
 .message-input {
-  padding: 20px 32px;
+  padding: 0 32px;
+  height: 64px;
   background: transparent;
   border: none;
   color: var(--ivory);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 400;
+  line-height: 1.5;
   outline: none;
   letter-spacing: -0.005em;
+  vertical-align: middle;
+  -webkit-appearance: none;
 }
 
 .message-input::placeholder {
@@ -560,7 +573,8 @@ body {
 }
 
 .send-button {
-  padding: 20px 32px;
+  padding: 0 32px;
+  height: 64px;
   background: transparent;
   border: none;
   border-left: 1px solid var(--border);
@@ -587,8 +601,13 @@ body {
 }
 
 @media (max-width: 768px) {
+  body {
+    overflow: hidden;
+  }
+
   .login-container {
     grid-template-columns: 1fr;
+    height: 100dvh;
   }
 
   .login-left {
@@ -596,20 +615,68 @@ body {
   }
 
   .login-right {
-    padding: 48px 32px;
+    padding: 40px 28px;
+    justify-content: center;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .login-form-title {
+    font-size: 22px;
+  }
+
+  .login-button {
+    font-size: 12px;
+    padding: 18px 24px;
+  }
+
+  .app {
+    height: 100dvh;
   }
 
   .chat-header {
-    padding: 0 20px;
+    padding: 0 16px;
+    height: 52px;
+  }
+
+  .chat-header::after {
+    left: 16px;
+    right: 16px;
+  }
+
+  .header-wordmark {
+    font-size: 11px;
+  }
+
+  .header-username {
+    font-size: 11px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .messages {
-    padding: 20px;
+    padding: 16px 12px;
+    gap: 0;
   }
 
   .message {
-    grid-template-columns: 72px 1fr auto;
-    gap: 10px;
+    grid-template-columns: 68px 1fr auto;
+    gap: 8px;
+    padding: 8px 6px;
+  }
+
+  .message-username {
+    font-size: 10px;
+  }
+
+  .message-text {
+    font-size: 13px;
+  }
+
+  .message-time {
+    font-size: 9px;
   }
 
   .message-form {
@@ -617,10 +684,42 @@ body {
   }
 
   .message-input {
-    padding: 18px 20px;
+    padding: 0 16px;
+    height: 56px;
+    font-size: 16px;
   }
 
   .send-button {
-    padding: 18px 20px;
+    padding: 0 20px;
+    height: 56px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .welcome-message {
+    padding: 32px 16px;
+  }
+
+  .welcome-message h2 {
+    font-size: 18px;
+  }
+
+  .welcome-message p {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .message {
+    grid-template-columns: 56px 1fr;
+    gap: 6px;
+  }
+
+  .message-time {
+    display: none;
+  }
+
+  .login-right {
+    padding: 32px 20px;
   }
 }
