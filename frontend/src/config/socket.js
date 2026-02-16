@@ -7,7 +7,7 @@ export const socket = io(SOCKET_URL, {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionAttempts: 10,
-  transports: ['websocket', 'polling'],
+  transports: ['polling', 'websocket'],
 });
 
 socket.on('connect', () => {
