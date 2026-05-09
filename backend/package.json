@@ -13,11 +13,12 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
-    "mongoose": "^9.2.1"
+    "express": "^5.2.1",
+    "mongoose": "^9.2.1",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
