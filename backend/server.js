@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import mongoose from "mongoose";
 import cors from "cors";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { Server } from "socket.io";
 import Message from "./models/Message.js";
 import User from "./models/User.js";
