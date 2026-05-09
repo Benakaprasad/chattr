@@ -2,13 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import socket from './config/socket';
 import './App.css';
 
+const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+
 function App() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages]       = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [username, setUsername] = useState('');
+  const [username, setUsername]       = useState('');
   const [tempUsername, setTempUsername] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [password, setPassword]       = useState('');
+  const [isLoggedIn, setIsLoggedIn]   = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [authError, setAuthError]     = useState('');
+  const [editingId, setEditingId]     = useState(null);
+  const [editText, setEditText]       = useState('');
   const messagesEndRef = useRef(null);
 
   const getUserColor = (name) => {
@@ -35,14 +42,36 @@ function App() {
 
     socket.on('disconnect', () => setIsConnected(false));
 
+    // Load chat history from DB on join
+    socket.on('history', (history) => {
+      const formatted = history.map(msg => ({
+        _id:       msg._id,
+        username:  msg.username,
+        text:      msg.text,
+        timestamp: msg.sentAt,
+      }));
+      setMessages(formatted);
+    });
+
     socket.on('message', (data) => {
       setMessages(prev => [...prev, data]);
     });
 
+    // UPDATE — reflect edited message in UI
+    socket.on('messageEdited', ({ _id, text }) => {
+      setMessages(prev =>
+        prev.map(m => m._id === _id ? { ...m, text } : m)
+      );
+    });
+
+    // DELETE — remove deleted message from UI
+    socket.on('messageDeleted', ({ _id }) => {
+      setMessages(prev => prev.filter(m => m._id !== _id));
+    });
+
     socket.on('userJoined', (data) => {
       setMessages(prev => [...prev, {
-        id: 'system',
-        username: 'System',
+        id: 'system', username: 'System',
         text: data.message,
         timestamp: new Date().toISOString(),
         isSystem: true
@@ -51,8 +80,7 @@ function App() {
 
     socket.on('userLeft', (data) => {
       setMessages(prev => [...prev, {
-        id: 'system',
-        username: 'System',
+        id: 'system', username: 'System',
         text: data.message,
         timestamp: new Date().toISOString(),
         isSystem: true
@@ -62,21 +90,55 @@ function App() {
     return () => {
       socket.off('connect');
       socket.off('disconnect');
+      socket.off('history');
       socket.off('message');
+      socket.off('messageEdited');
+      socket.off('messageDeleted');
       socket.off('userJoined');
       socket.off('userLeft');
     };
   }, [username]);
 
-  const handleLogin = (e) => {
+  // READ — login
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (tempUsername.trim()) {
-      setUsername(tempUsername.trim());
+    setAuthError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: tempUsername.trim(), password })
+      });
+      const data = await res.json();
+      if (!res.ok) return setAuthError(data.error);
+      setUsername(data.username);
       setIsLoggedIn(true);
-      socket.emit('setUsername', tempUsername.trim());
+      socket.emit('setUsername', data.username);
+    } catch {
+      setAuthError('Login failed. Try again.');
     }
   };
 
+  // CREATE — register
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: tempUsername.trim(), password })
+      });
+      const data = await res.json();
+      if (!res.ok) return setAuthError(data.error);
+      setIsRegistering(false);
+      setAuthError('Registered! Please log in.');
+    } catch {
+      setAuthError('Registration failed. Try again.');
+    }
+  };
+
+  // CREATE — send message
   const sendMessage = (e) => {
     e.preventDefault();
     if (inputMessage.trim()) {
@@ -85,14 +147,27 @@ function App() {
     }
   };
 
+  // UPDATE — emit edit
+  const submitEdit = (messageId) => {
+    if (editText.trim()) {
+      socket.emit('editMessage', { messageId, newText: editText });
+      setEditingId(null);
+      setEditText('');
+    }
+  };
+
+  // DELETE — emit delete
+  const deleteMessage = (messageId) => {
+    socket.emit('deleteMessage', { messageId });
+  };
+
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
+      hour: '2-digit', minute: '2-digit', hour12: false
     });
   };
 
+  // ── LOGIN / REGISTER UI ──────────────────────────────────────────
   if (!isLoggedIn) {
     return (
       <>
@@ -101,18 +176,13 @@ function App() {
         <div className="login-container">
           <div className="login-left">
             <div className="login-brand">
-            <img src="/chattr.svg" alt="Chattr" width="52" height="52" />
-            <div className="login-brand-name">Chattr</div>
-            <div className="login-tagline">Real-time global messaging</div>
-          </div>
-
-            <div className="login-headline">
-              <h1>
-                Talk to
-                <span>the world.</span>
-              </h1>
+              <img src="/chattr.svg" alt="Chattr" width="52" height="52" />
+              <div className="login-brand-name">Chattr</div>
+              <div className="login-tagline">Real-time global messaging</div>
             </div>
-
+            <div className="login-headline">
+              <h1>Talk to<span>the world.</span></h1>
+            </div>
             <div className="login-meta">
               <div className="login-status-dot">
                 <span className={`dot ${isConnected ? 'active' : ''}`} />
@@ -123,17 +193,13 @@ function App() {
 
           <div className="login-right">
             <div className="login-form-header">
-              <div className="login-form-label">Step 01</div>
-              <div className="login-form-title">Choose your name</div>
-              <div className="login-form-subtitle">
-                This is how others will see you in the chat.
-                <br />No account required.
-              </div>
+              <div className="login-form-label">{isRegistering ? 'Create account' : 'Welcome back'}</div>
+              <div className="login-form-title">{isRegistering ? 'Register' : 'Login'}</div>
             </div>
 
-            <form onSubmit={handleLogin} className="login-form">
+            <form onSubmit={isRegistering ? handleRegister : handleLogin} className="login-form">
               <div className="input-wrapper">
-                <label className="input-label">Display name</label>
+                <label className="input-label">Username</label>
                 <input
                   type="text"
                   value={tempUsername}
@@ -144,21 +210,33 @@ function App() {
                   autoFocus
                 />
               </div>
+              <div className="input-wrapper">
+                <label className="input-label">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="login-input"
+                />
+              </div>
+              {authError && <div className="auth-error">{authError}</div>}
               <button
                 type="submit"
                 className="login-button"
-                disabled={!tempUsername.trim()}
+                disabled={!tempUsername.trim() || !password.trim()}
               >
-                Enter the room
+                {isRegistering ? 'Create account' : 'Enter the room'}
               </button>
             </form>
 
             <div className="login-footer">
-              <span className="login-footer-text">
-                {messages.length > 0 ? `${messages.length} messages` : 'No messages yet'}
-              </span>
-              <span className={`login-status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
-                {isConnected ? 'Live' : 'Offline'}
+              <span
+                className="login-footer-text"
+                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => { setIsRegistering(!isRegistering); setAuthError(''); }}
+              >
+                {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
               </span>
             </div>
           </div>
@@ -167,6 +245,7 @@ function App() {
     );
   }
 
+  // ── CHAT UI ──────────────────────────────────────────────────────
   return (
     <>
       <div className="noise-overlay" />
@@ -174,12 +253,12 @@ function App() {
       <div className="app">
         <header className="chat-header">
           <div className="header-left">
-          <img src="/chattr.svg" alt="Chattr" width="32" height="32" />
-          <span className="header-divider" />
-          <span className="header-wordmark">Chattr</span>
-          <span className="header-divider" />
-          <span className="header-username">{username}</span>
-        </div>
+            <img src="/chattr.svg" alt="Chattr" width="32" height="32" />
+            <span className="header-divider" />
+            <span className="header-wordmark">Chattr</span>
+            <span className="header-divider" />
+            <span className="header-username">{username}</span>
+          </div>
           <div className="header-right">
             <div className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
               <span className={`dot ${isConnected ? 'active' : ''}`} />
@@ -194,10 +273,7 @@ function App() {
               <div className="welcome-message">
                 <div className="welcome-rule" />
                 <h2>You're in.</h2>
-                <p>
-                  Say something. Anyone connected right now<br />
-                  will see your message instantly.
-                </p>
+                <p>Say something. Anyone connected right now<br />will see your message instantly.</p>
               </div>
             )}
 
@@ -207,18 +283,36 @@ function App() {
                   <span className="system-text">{msg.text}</span>
                 </div>
               ) : (
-                <div
-                  key={index}
-                  className={`message ${msg.username === username ? 'own-message' : ''}`}
-                >
-                  <span
-                    className="message-username"
-                    style={{ color: getUserColor(msg.username) }}
-                  >
+                <div key={index} className={`message ${msg.username === username ? 'own-message' : ''}`}>
+                  <span className="message-username" style={{ color: getUserColor(msg.username) }}>
                     {msg.username}
                   </span>
-                  <span className="message-text">{msg.text}</span>
+
+                  {/* Inline edit UI */}
+                  {editingId === msg._id ? (
+                    <span className="message-edit-inline">
+                      <input
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="edit-input"
+                        autoFocus
+                      />
+                      <button onClick={() => submitEdit(msg._id)} className="edit-save-btn">Save</button>
+                      <button onClick={() => setEditingId(null)} className="edit-cancel-btn">Cancel</button>
+                    </span>
+                  ) : (
+                    <span className="message-text">{msg.text}</span>
+                  )}
+
                   <span className="message-time">{formatTime(msg.timestamp)}</span>
+
+                  {/* Edit/Delete only for own messages */}
+                  {msg.username === username && !msg.isSystem && (
+                    <span className="message-actions">
+                      <button onClick={() => { setEditingId(msg._id); setEditText(msg.text); }} className="msg-action-btn">Edit</button>
+                      <button onClick={() => deleteMessage(msg._id)} className="msg-action-btn delete">Delete</button>
+                    </span>
+                  )}
                 </div>
               )
             ))}
@@ -236,11 +330,7 @@ function App() {
             className="message-input"
             autoFocus
           />
-          <button
-            type="submit"
-            disabled={!isConnected || !inputMessage.trim()}
-            className="send-button"
-          >
+          <button type="submit" disabled={!isConnected || !inputMessage.trim()} className="send-button">
             Send
           </button>
         </form>
