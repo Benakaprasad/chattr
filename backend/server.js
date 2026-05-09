@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from "express";
 import { createServer } from "http";
 import mongoose from "mongoose";
@@ -173,7 +174,7 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Database connection established');
   } catch (error) {
-    console.error('Database connection failed', error);
+    console.error('Database connection failed', error.message);
     process.exit(1);
   }
 };
