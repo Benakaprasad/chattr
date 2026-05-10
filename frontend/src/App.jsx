@@ -205,7 +205,7 @@ function App() {
                   type="text"
                   value={tempUsername}
                   onChange={(e) => setTempUsername(e.target.value)}
-                  placeholder="e.g. benaka"
+                  placeholder="e.g. Rohan"
                   className="login-input"
                   maxLength={20}
                   autoFocus
